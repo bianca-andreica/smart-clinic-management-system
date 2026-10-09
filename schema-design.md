@@ -1,194 +1,201 @@
-# Smart Clinic Management System — MySQL Schema Design
+
+# Smart Clinic Management System — Database Schema Design
 
 ## 1. Overview
 
-The Smart Clinic Management System uses MySQL as its relational database. The database stores administrator accounts, doctors, patients, appointments, and prescriptions.
+The Smart Clinic Management System uses MySQL for relational data and MongoDB for prescription documents.
 
-The schema uses primary keys to identify records and foreign keys to maintain referential integrity between related tables.
+The MySQL database is named `cms`, as specified in the course lab. Spring Boot and JPA are used to create and manage the relational tables.
 
-## 2. Database Design
+The relational database contains the following five tables:
+- `admin`
+- `doctor`
+- `doctor_available_times`
+- `patient`
+- `appointment`
 
-Database name: `smart_clinic_db`
+Prescription documents are stored separately in the MongoDB `prescriptions` collection.
 
-### Table 1: admins
+## 2. MySQL Database
 
-Stores administrator account information.
+Database name: `cms`
 
-| Column        | Data type    | Constraints                         |
-| ------------- | ------------ | ----------------------------------- |
-| id            | BIGINT       | Primary key, auto-increment         |
-| full_name     | VARCHAR(100) | NOT NULL                            |
-| email         | VARCHAR(150) | NOT NULL, UNIQUE                    |
-| password_hash | VARCHAR(255) | NOT NULL                            |
-| created_at    | TIMESTAMP    | NOT NULL, default CURRENT_TIMESTAMP |
+### 2.1 Table: doctor
 
-### Table 2: doctors
+Stores doctor profiles, contact information, login credentials, and medical specialties.
 
-Stores doctor profiles, login credentials, specialties, and availability.
+| Column | Data type | Constraints |
+|---|---|---|
+| id | BIGINT | Primary key, auto-increment |
+| email | VARCHAR(255) | NOT NULL, UNIQUE |
+| name | VARCHAR(255) | NOT NULL |
+| password | VARCHAR(255) | NOT NULL |
+| phone | VARCHAR(30) | NULL |
+| specialty | VARCHAR(100) | NOT NULL |
 
-| Column          | Data type    | Constraints                         |
-| --------------- | ------------ | ----------------------------------- |
-| id              | BIGINT       | Primary key, auto-increment         |
-| full_name       | VARCHAR(100) | NOT NULL                            |
-| email           | VARCHAR(150) | NOT NULL, UNIQUE                    |
-| phone           | VARCHAR(20)  | UNIQUE                              |
-| specialty       | VARCHAR(100) | NOT NULL                            |
-| password_hash   | VARCHAR(255) | NOT NULL                            |
-| available_times | JSON         | NOT NULL                            |
-| created_at      | TIMESTAMP    | NOT NULL, default CURRENT_TIMESTAMP |
+### 2.2 Table: doctor_available_times
 
-The `available_times` column stores a JSON representation of the doctor's availability schedule.
+Stores the available appointment time slots for each doctor. A doctor can have multiple availability entries.
 
-### Table 3: patients
+| Column | Data type | Constraints |
+|---|---|---|
+| doctor_id | BIGINT | NOT NULL, foreign key |
+| available_times | VARCHAR(50) | NOT NULL |
+
+Relationship:
+- `doctor_id` references `doctor(id)`.
+- One doctor can have multiple availability time slots.
+- The combination of `doctor_id` and `available_times` can be used as a composite primary key to prevent duplicate availability entries.
+
+Example availability values include `09:00-10:00` and `10:00-11:00`.
+
+### 2.3 Table: patient
 
 Stores patient profiles and login information.
 
-| Column        | Data type    | Constraints                         |
-| ------------- | ------------ | ----------------------------------- |
-| id            | BIGINT       | Primary key, auto-increment         |
-| full_name     | VARCHAR(100) | NOT NULL                            |
-| email         | VARCHAR(150) | NOT NULL, UNIQUE                    |
-| phone         | VARCHAR(20)  | UNIQUE                              |
-| password_hash | VARCHAR(255) | NOT NULL                            |
-| date_of_birth | DATE         | NULL                                |
-| created_at    | TIMESTAMP    | NOT NULL, default CURRENT_TIMESTAMP |
+| Column | Data type | Constraints |
+|---|---|---|
+| id | BIGINT | Primary key, auto-increment |
+| address | VARCHAR(255) | NULL |
+| email | VARCHAR(255) | NOT NULL, UNIQUE |
+| name | VARCHAR(255) | NOT NULL |
+| password | VARCHAR(255) | NOT NULL |
+| phone | VARCHAR(30) | NULL |
 
-Patient records can be searched using email or phone number.
+Each patient is identified by a unique database ID. Email is unique to support patient lookup and login.
 
-### Table 4: appointments
+### 2.4 Table: appointment
 
-Stores appointments booked between doctors and patients.
+Stores appointments linking doctors and patients.
 
-| Column           | Data type                                | Constraints                         |
-| ---------------- | ---------------------------------------- | ----------------------------------- |
-| id               | BIGINT                                   | Primary key, auto-increment         |
-| doctor_id        | BIGINT                                   | NOT NULL, foreign key               |
-| patient_id       | BIGINT                                   | NOT NULL, foreign key               |
-| appointment_time | DATETIME                                 | NOT NULL                            |
-| reason           | TEXT                                     | NULL                                |
-| status           | ENUM('BOOKED', 'COMPLETED', 'CANCELLED') | NOT NULL, default 'BOOKED'          |
-| created_at       | TIMESTAMP                                | NOT NULL, default CURRENT_TIMESTAMP |
+| Column | Data type | Constraints |
+|---|---|---|
+| id | BIGINT | Primary key, auto-increment |
+| appointment_time | DATETIME(6) | NOT NULL |
+| status | TINYINT | NOT NULL, default 0 |
+| doctor_id | BIGINT | NOT NULL, foreign key |
+| patient_id | BIGINT | NOT NULL, foreign key |
 
 Foreign key relationships:
+- `doctor_id` references `doctor(id)`.
+- `patient_id` references `patient(id)`.
 
-* `doctor_id` references `doctors(id)`.
-* `patient_id` references `patients(id)`.
+One doctor can have multiple appointments, and one patient can have multiple appointments. Each appointment belongs to one doctor and one patient.
 
-The `appointment_time` column stores both the appointment date and time. Application-level validation checks doctor availability and prevents conflicting bookings.
+The course sample data uses numeric status values such as `0` and `1`. Their exact meaning depends on the application model.
 
-### Table 5: prescriptions
+### 2.5 Table: admin
 
-Stores prescriptions associated with appointments.
+Stores administrator login information.
 
-| Column         | Data type    | Constraints                         |
-| -------------- | ------------ | ----------------------------------- |
-| id             | BIGINT       | Primary key, auto-increment         |
-| appointment_id | BIGINT       | NOT NULL, foreign key               |
-| medication     | VARCHAR(255) | NOT NULL                            |
-| dosage         | VARCHAR(100) | NOT NULL                            |
-| instructions   | TEXT         | NULL                                |
-| prescribed_at  | TIMESTAMP    | NOT NULL, default CURRENT_TIMESTAMP |
+| Column | Data type | Constraints |
+|---|---|---|
+| id | BIGINT | Primary key, auto-increment |
+| username | VARCHAR(100) | NOT NULL, UNIQUE |
+| password | VARCHAR(255) | NOT NULL |
 
-Foreign key relationship:
+Administrators use the admin account to access administrative functionality, including doctor management.
 
-* `appointment_id` references `appointments(id)`.
+## 3. Entity Relationships
 
-The associated appointment identifies the doctor and patient for the prescription.
+The main relationships are:
 
-## 3. Relationships
+- `doctor` 1-to-many `doctor_available_times`
+- `doctor` 1-to-many `appointment`
+- `patient` 1-to-many `appointment`
 
-* One doctor can have multiple appointments.
-* One patient can book multiple appointments.
-* Each appointment belongs to one doctor and one patient.
-* Each prescription belongs to an appointment.
-* One appointment may have multiple prescriptions.
-* Administrators manage doctor records through authorized application functions.
+The `doctor_available_times` table references the doctor whose availability is recorded.
 
-## 4. MySQL Schema SQL
+The `appointment` table contains foreign keys to both `doctor` and `patient`, ensuring that each appointment is associated with valid records.
+
+## 4. SQL Schema Reference
+
+The following SQL illustrates the relational database design. In the course lab, Spring Boot and JPA create the tables when the backend starts, so the actual table definitions must remain consistent with the entity classes.
 
 ```sql
-CREATE DATABASE IF NOT EXISTS smart_clinic_db;
-USE smart_clinic_db;
+CREATE DATABASE IF NOT EXISTS cms;
+USE cms;
 
-CREATE TABLE admins (
+CREATE TABLE doctor (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(30),
+    specialty VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB;
 
-CREATE TABLE doctors (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    phone VARCHAR(20) UNIQUE,
-    specialty VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    available_times JSON NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE doctor_available_times (
+    doctor_id BIGINT NOT NULL,
+    available_times VARCHAR(50) NOT NULL,
+    PRIMARY KEY (doctor_id, available_times),
+    CONSTRAINT fk_available_times_doctor
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE patients (
+CREATE TABLE patient (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    phone VARCHAR(20) UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    date_of_birth DATE NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    address VARCHAR(255),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(30)
 ) ENGINE=InnoDB;
 
-CREATE TABLE appointments (
+CREATE TABLE admin (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE appointment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    appointment_time DATETIME(6) NOT NULL,
+    status TINYINT NOT NULL DEFAULT 0,
     doctor_id BIGINT NOT NULL,
     patient_id BIGINT NOT NULL,
-    appointment_time DATETIME NOT NULL,
-    reason TEXT NULL,
-    status ENUM('BOOKED', 'COMPLETED', 'CANCELLED')
-        NOT NULL DEFAULT 'BOOKED',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_appointments_doctor_time
+    INDEX idx_appointment_doctor_time
         (doctor_id, appointment_time),
-    INDEX idx_appointments_patient_time
+    INDEX idx_appointment_patient_time
         (patient_id, appointment_time),
-    CONSTRAINT fk_appointments_doctor
-        FOREIGN KEY (doctor_id) REFERENCES doctors(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_appointments_patient
-        FOREIGN KEY (patient_id) REFERENCES patients(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE prescriptions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    appointment_id BIGINT NOT NULL,
-    medication VARCHAR(255) NOT NULL,
-    dosage VARCHAR(100) NOT NULL,
-    instructions TEXT NULL,
-    prescribed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_prescriptions_appointment
-        FOREIGN KEY (appointment_id) REFERENCES appointments(id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT fk_appointment_doctor
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id),
+    CONSTRAINT fk_appointment_patient
+        FOREIGN KEY (patient_id) REFERENCES patient(id)
 ) ENGINE=InnoDB;
 ```
 
-## 5. Reporting Support
+## 5. MongoDB Prescription Documents
 
-The appointments table supports the required reporting procedures:
+Prescriptions are stored in a separate MongoDB collection named `prescriptions`, rather than in a MySQL table.
 
-* `GetDailyAppointmentReportByDoctor` retrieves appointment information for a doctor on a selected date.
-* `GetDoctorWithMostPatientsByMonth` identifies the doctor with the most distinct patients during a selected month.
-* `GetDoctorWithMostPatientsByYear` identifies the doctor with the most distinct patients during a selected year.
+A prescription document can contain these fields:
 
-The `doctor_id`, `patient_id`, and `appointment_time` columns support the joins, filtering, and grouping needed by these reports.
+| Field | Type | Description |
+|---|---|---|
+| _id | ObjectId | Unique document identifier |
+| patientName | String | Patient name |
+| appointmentId | Number | Associated appointment ID |
+| medication | String | Medication name |
+| dosage | String | Prescribed dosage |
+| doctorNotes | String | Doctor's instructions |
+| _class | String | Spring Data document type metadata |
+
+The `appointmentId` links the prescription logically to an appointment in MySQL. Application logic is responsible for maintaining that relationship across the two databases.
 
 ## 6. Data Integrity and Security
 
-* Primary keys uniquely identify database records.
-* Unique constraints prevent duplicate email addresses.
-* Foreign keys enforce relationships between doctors, patients, appointments, and prescriptions.
-* Required fields use `NOT NULL` constraints.
-* Passwords are stored as hashes, not plaintext.
-* Application-level validation and authorization protect appointment and prescription operations.
-* InnoDB provides foreign key enforcement and transactional support.
+- Primary keys uniquely identify records.
+- Unique constraints prevent duplicate doctor emails, patient emails, and administrator usernames.
+- Foreign keys maintain relationships between doctors, patients, availability slots, and appointments.
+- Required fields use `NOT NULL` constraints.
+- Application-level validation checks appointment data and doctor availability.
+- In a production deployment, passwords must be stored as secure hashes rather than plaintext.
+- Database credentials must be configured outside public source code and must not be committed to GitHub.
+
+## 7. Reporting Support
+
+The `appointment` table provides the doctor IDs, patient IDs, appointment dates, and status values needed for appointment reporting.
+
+The stored procedures `GetDailyAppointmentReportByDoctor`, `GetDoctorWithMostPatientsByMonth`, and `GetDoctorWithMostPatientsByYear` can use joins between `appointment`, `doctor`, and `patient` to generate the required reports.
