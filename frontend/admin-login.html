@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Smart Clinic</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f3f6fb;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: min(960px, 100%);
+            min-height: 560px;
+            background: #ffffff;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 22px 60px rgba(30, 58, 95, 0.12);
+        }
+
+        .welcome-panel {
+            background: linear-gradient(145deg, #123b65, #176b87);
+            color: white;
+            padding: 54px 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 19px;
+            font-weight: 700;
+        }
+
+        .brand-icon {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 26px;
+        }
+
+        .welcome-content h1 {
+            font-size: 36px;
+            line-height: 1.2;
+            margin-bottom: 18px;
+        }
+
+        .welcome-content p {
+            color: #d9e8f5;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .welcome-footer {
+            color: #c3d9e9;
+            font-size: 12px;
+        }
+
+        .form-panel {
+            padding: 62px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .eyebrow {
+            color: #117a8b;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .form-panel h2 {
+            font-size: 30px;
+            margin: 0 0 12px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0 0 32px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #d8e0ea;
+            border-radius: 9px;
+            font-size: 15px;
+            margin-bottom: 22px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #168398;
+            box-shadow: 0 0 0 3px rgba(22, 131, 152, 0.12);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: 0;
+            border-radius: 9px;
+            color: white;
+            background: #117a8b;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0c6271;
+        }
+
+        .security-note {
+            margin-top: 24px;
+            color: #64748b;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 700px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-panel {
+                padding: 30px;
+                min-height: 220px;
+            }
+
+            .welcome-content h1 {
+                font-size: 27px;
+            }
+
+            .welcome-footer {
+                margin-top: 24px;
+            }
+
+            .form-panel {
+                padding: 36px 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="login-container">
+        <section class="welcome-panel">
+            <div class="brand">
+                <div class="brand-icon" aria-hidden="true">+</div>
+                <span>Smart Clinic</span>
+            </div>
+
+            <div class="welcome-content">
+                <h1>Healthcare management, made simpler.</h1>
+                <p>
+                    Manage doctors, patient records, and appointments
+                    from one central administration portal.
+                </p>
+            </div>
+
+            <div class="welcome-footer">
+                Smart Clinic Management System
+            </div>
+        </section>
+
+        <section class="form-panel">
+            <div class="eyebrow">Administrator Portal</div>
+            <h2>Welcome back</h2>
+            <p class="subtitle">
+                Sign in with your administrator credentials to continue.
+            </p>
+
+            <form id="adminLoginForm">
+                <label for="email">Email address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="admin@smartclinic.com"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit">Sign In to Admin Portal</button>
+            </form>
+
+            <p class="security-note">
+                Authorized administrator access only.<br>
+                Smart Clinic Management System
+            </p>
+        </section>
+    </main>
+
+    <script>
+        // The authentication endpoint will be connected during backend integration.
+        document.getElementById("adminLoginForm").addEventListener(
+            "submit",
+            function (event) {
+                event.preventDefault();
+                alert("The admin login interface is ready for backend integration.");
+            }
+        );
+    </script>
+</body>
+</html>
